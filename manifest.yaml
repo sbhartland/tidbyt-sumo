@@ -1,0 +1,8 @@
+---
+id: 9a2c4250-575c-4c48-b61c-4740a3356441
+name: Sumo Stats
+summary: Displays sumo wrestler info
+desc: Shows stats and current tournament record for a given sumo.
+author: Seth Hartland
+fileName: sumo_stats.star
+packageName: sumostats
