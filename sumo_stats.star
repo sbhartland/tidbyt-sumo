@@ -4,12 +4,13 @@ load("http.star", "http")
 load("math.star", "math")
 load("time.star", "time")
 load("humanize.star", "humanize")
+load('html.star', 'html')
 
 DEFAULT_SUMO = "Ura"
 RIKISHI_NAME_URL = "https://sumo-api.com/api/rikishis?shikonaEn="
 RIKISHI_BASE_URL = "https://sumo-api.com/api/rikishi"
-SUMO_ASSN_RIKISHI_URL = "https://www.sumo.or.jp/EnSumoDataRikishi/profile/{}"
-SUMO_ASSN_IMAGE_URL = "https://www.sumo.or.jp/img/sumo_data/rikishi/60x60/{}.jpg"
+SUMO_ASSN_RIKISHI_URL = "https://www.sumo.or.jp/EnSumoDataRikishi/profile"
+SUMO_ASSN_IMAGE_URL = "https://www.sumo.or.jp/img/sumo_data/rikishi/60x60"
 SUMO_INFO_CACHE_SECONDS = 7200
 BASHO_URL = "https://sumo-api.com/api/basho/{}"
 BASHO_CACHE_SECONDS = 43200
@@ -59,21 +60,51 @@ def main(config):
         matchesBody = matchesResponse.json()
         if matchesBody["total"] > 0:
             for match in matchesBody["records"]:
-                matchResult = "x"
+                matchResult = render.Circle(color="#f00", diameter=4, child=render.Circle(color="#000", diameter=2))
                 if sumoApiId == match["winnerId"]:
-                    matchResult = "o"
-                renderResult = render.Text(content = matchResult, font="CG-pixel-3x5-mono")
-                matchResults.insert(0, renderResult)
-    
+                    matchResult = render.Circle(color="#0f0", diameter=4)
+                matchResults.insert(0, render.Padding(pad=(0, 1, 1, 0), child=matchResult))
+
+    nskRikishiUrl = "{}/{}".format(SUMO_ASSN_RIKISHI_URL, nskId)
+    nskRikishiResponse = http.get(nskRikishiUrl, ttl_seconds = SUMO_INFO_CACHE_SECONDS)
+    nskImage = None
+
+    if nskRikishiResponse.status_code == 200:
+        pageBody = html(nskRikishiResponse.body())
+        largeImgSrc = pageBody.find("#mainContent > .mdSection1 > .mdColSet1").children_filtered("img").attr("src")
+        nskImgId = largeImgSrc[(largeImgSrc.rfind("/") + 1): largeImgSrc.rfind(".jpg")]
+        nskSmallImgUrl = "{}/{}.jpg".format(SUMO_ASSN_IMAGE_URL, nskImgId)
+        nskImageResponse = http.get(nskSmallImgUrl, ttl_seconds = SUMO_INFO_CACHE_SECONDS)
+        print(nskImgId)
+
+        if nskImageResponse.status_code == 200:
+            nskImage = render.Image(src=nskImageResponse.body(), width=22, height=22)
+
+    sumoInfoRender = render.Column(
+        children = [
+            render.Text(content="{} cm".format(heightCm), font="tom-thumb"),
+            render.Text(content="{} kg".format(weightKg), font="tom-thumb"),
+            render.Row(children = matchResults[0:8]),
+            render.Row(children = matchResults[8:14])
+        ]
+    )
+
+    contentRender = render.Row(
+        children = [
+            render.Padding(pad=(0, 0, 1, 0), child=nskImage),
+            sumoInfoRender
+        ]
+    )
+
+    pageRender = render.Column(
+        children = [
+            render.Padding(pad=(0, 0, 0, 1), child=render.Text(name)),
+            contentRender
+        ]
+    )
+
     return render.Root(
-        child = render.Column(
-            children = [
-                render.Text(name),
-                render.Text(content="{}cm/{}kg".format(heightCm, weightKg), font="tom-thumb"),
-                render.Row(children = matchResults[0:8]),
-                render.Row(children = matchResults[8:14])
-            ]
-        )
+        child = render.Padding(pad=(1, 0, 0, 0), child=pageRender)
     )
 
 def get_schema():
