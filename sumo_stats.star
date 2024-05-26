@@ -119,7 +119,7 @@ def get_match_stats(sumoApiId):
         return render.Column(
             children=[
                 render.Row(children = matchResults[0:8]),
-                render.Row(children = matchResults[8:14])
+                render.Row(children = matchResults[8:15])
             ]
         )
 
