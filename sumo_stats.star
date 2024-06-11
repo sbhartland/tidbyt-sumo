@@ -57,14 +57,26 @@ def main(config):
     rank = baseRikishiInfo["currentRank"]
     heightCm = math.floor(baseRikishiInfo["height"])
     weightKg = math.floor(baseRikishiInfo["weight"])
+    currentRank = get_formatted_rank(baseRikishiInfo["currentRank"])
 
     matchStats = get_match_stats(sumoApiId)
     nskImage = get_image(nskId)
 
+    heightMeters = math.floor(heightCm / 100)
+    heightDecimal = math.floor(math.round((heightCm % 100) / 10))
+    heightRender = render.Row(children=[
+        render.Text(content="{}".format(heightMeters), font="tom-thumb"),
+        render.Padding(pad=(0, 4, 1, 0), child=render.Box(color="#fff", width=1, height=1)),
+        render.Text(content="{}m".format(heightDecimal), font="tom-thumb")
+    ])
+
     sumoInfoRender = render.Column(
         children = [
-            render.Text(content="{} cm".format(heightCm), font="tom-thumb"),
-            render.Text(content="{} kg".format(weightKg), font="tom-thumb"),
+            render.Row(children=[
+                heightRender,
+                render.Text(content=" {}kg".format(weightKg), font="tom-thumb")
+            ]),
+            render.Text(content=currentRank, font="tom-thumb"),
             matchStats
         ]
     )
@@ -137,6 +149,13 @@ def get_most_recent_basho_id():
         bashoMonthStr = "0{}".format(bashoMonthStr)
     return "{}{}".format(yearInt, bashoMonthStr)
     
+
+def get_formatted_rank(rankText):
+    spaceIndex = rankText.index(" ")
+    firstCharacter = rankText[0:1]
+    remainder = rankText[(spaceIndex + 1):len(rankText)]
+    return "{}{}".format(firstCharacter, remainder)
+
 
 def get_image(nskRikishiId):
     nskRikishiUrl = "{}/{}".format(SUMO_ASSN_RIKISHI_URL, nskRikishiId)
