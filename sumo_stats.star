@@ -64,6 +64,11 @@ def main(config):
 
     heightMeters = math.floor(heightCm / 100)
     heightDecimal = math.floor(math.round((heightCm % 100) / 10))
+
+    if heightDecimal == 10:
+        heightMeters = heightMeters + 1
+        heightDecimal = 0
+    
     heightRender = render.Row(children=[
         render.Text(content="{}".format(heightMeters), font="tom-thumb"),
         render.Padding(pad=(0, 4, 1, 0), child=render.Box(color="#fff", width=1, height=1)),
