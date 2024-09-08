@@ -59,7 +59,7 @@ def main(config):
     weightKg = math.floor(baseRikishiInfo["weight"])
     currentRank = get_formatted_rank(baseRikishiInfo["currentRank"])
 
-    matchStats = get_match_stats(sumoApiId)
+    matchStats = get_match_stats(sumoApiId, name)
     nskImage = get_image(nskId)
 
     heightMeters = math.floor(heightCm / 100)
@@ -176,7 +176,7 @@ def get_image(nskRikishiId):
     return render.Padding(pad=1, color="#fff", child=render.Box(color="#000", width=20, height=20, child=render.Text(content="?", font="10x20")))
 
 
-def get_match_stats(sumoApiId):
+def get_match_stats(sumoApiId, name):
     bashoId = humanize.time_format("yyyyMM", time.now())
 
     matchUrl = "{}/{}/matches?bashoId={}".format(RIKISHI_BASE_URL, sumoApiId, bashoId)
@@ -187,10 +187,11 @@ def get_match_stats(sumoApiId):
         matchesBody = matchesResponse.json()
         if matchesBody["total"] > 0:
             for match in matchesBody["records"]:
-                matchResult = render.Circle(color="#f00", diameter=4, child=render.Circle(color="#000", diameter=2))
-                if sumoApiId == match["winnerId"]:
-                    matchResult = render.Circle(color="#0f0", diameter=4)
-                matchResults.insert(0, render.Padding(pad=(0, 1, 1, 0), child=matchResult))
+                if name == match["eastShikona"] or name == match["westShikona"]: # there is a bug in the API that returns different matches under the provided ID
+                    matchResult = render.Circle(color="#f00", diameter=4, child=render.Circle(color="#000", diameter=2))
+                    if sumoApiId == match["winnerId"]:
+                        matchResult = render.Circle(color="#0f0", diameter=4)
+                    matchResults.insert(0, render.Padding(pad=(0, 1, 1, 0), child=matchResult))
     
     if len(matchResults) > 0:
         return render.Column(
